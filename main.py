@@ -11,7 +11,7 @@ bot = telebot.TeleBot(TOKEN)
 chat_data = {}
 
 def send_start_message(message):
-    bot.reply_to(message, "Hi! Use /nonsk4 to check cards.")
+    bot.reply_to(message, "Hi! Use /nonsk4 in reply to a txt file to check cards.")
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -19,7 +19,21 @@ def start(message):
 
 @bot.message_handler(commands=['nonsk4'])
 def nonsk4_command(message):
-    bot.reply_to(message, "Please provide the combo as a txt file.")
+    if message.reply_to_message and message.reply_to_message.document:
+        if message.reply_to_message.document.mime_type == 'text/plain':
+            file_info = bot.get_file(message.reply_to_message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            file_content = downloaded_file.decode('utf-8')
+
+            chat_id = message.chat.id
+            username = message.from_user.username
+
+            # Start a new thread to handle the file processing
+            threading.Thread(target=process_document, args=(chat_id, username, file_content)).start()
+        else:
+            bot.reply_to(message, "Please reply to a valid txt file.")
+    else:
+        bot.reply_to(message, "Please reply to a txt file with the /nonsk4 command.")
 
 def process_document(chat_id, username, file_content):
     total_accounts = file_content.splitlines()
@@ -66,19 +80,6 @@ def process_document(chat_id, username, file_content):
     final_message = "Card is finished checking.\n\nDeveloper :@aftab"
     bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message)
 
-@bot.message_handler(content_types=['document'])
-def handle_document(message):
-    if message.document.mime_type == 'text/plain':
-        file_info = bot.get_file(message.document.file_id)
-        downloaded_file = bot.download_file(file_info.file_path)
-        file_content = downloaded_file.decode('utf-8')
-
-        chat_id = message.chat.id
-        username = message.from_user.username
-
-        # Start a new thread to handle the file processing
-        threading.Thread(target=process_document, args=(chat_id, username, file_content)).start()
-
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     chat_id = call.message.chat.id
@@ -86,11 +87,16 @@ def callback_query(call):
     cmd = data[1]
     query_id = data[0]
 
+    # Ensure chat_data contains the necessary keys
+    if chat_id not in chat_data:
+        bot.answer_callback_query(call.id, "No data available for this chat.")
+        return
+
     if cmd == 'approved':
-        approved_list = '\n'.join(chat_data[chat_id]['approved']) if chat_data[chat_id]['approved'] else 'No approved cards yet.'
+        approved_list = '\n'.join(chat_data[chat_id].get('approved', [])) if chat_data[chat_id].get('approved') else 'No approved cards yet.'
         bot.send_message(chat_id, f"Approved Cards:\n{approved_list}")
     elif cmd == 'declined':
-        declined_list = '\n'.join(chat_data[chat_id]['declined']) if chat_data[chat_id]['declined'] else 'No declined cards yet.'
+        declined_list = '\n'.join(chat_data[chat_id].get('declined', [])) if chat_data[chat_id].get('declined') else 'No declined cards yet.'
         bot.send_message(chat_id, f"Declined Cards:\n{declined_list}")
     elif cmd == 'total':
         pass  # Do nothing
