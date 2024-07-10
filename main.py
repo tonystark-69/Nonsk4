@@ -1,5 +1,6 @@
 import telebot
 import time
+from keep_alive import keep_alive
 import threading
 from telebot import types
 from nonsk4 import check_nonsk4, get_footer_info
@@ -124,5 +125,6 @@ def callback_query(call):
     elif cmd == 'stop':
         bot.edit_message_text(chat_id=chat_id, message_id=call.message.message_id, text="Processing stopped by user.")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    keep_alive()
     bot.polling()
