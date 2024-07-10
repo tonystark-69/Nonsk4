@@ -3,15 +3,18 @@ import time
 import threading
 from telebot import types
 from nonsk4 import check_nonsk4, get_footer_info
+import os
+import sys
 
 TOKEN = '7422696256:AAHV6Df2UShvfvrlFMTkSX8cki6KAMl0T7w'
 bot = telebot.TeleBot(TOKEN)
 
 # Dictionary to hold chat_id specific data
 chat_data = {}
+stop_processing = False
 
 def send_start_message(message):
-    bot.reply_to(message, "Hi! Use /nonsk4 in reply to a txt file to check cards.")
+    bot.reply_to(message, "Hi! Use /nonsk4 in reply to a txt file to check cards. Use /restart to restart the bot and /stop to stop all checks.")
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -35,13 +38,26 @@ def nonsk4_command(message):
     else:
         bot.reply_to(message, "Please reply to a txt file with the /nonsk4 command.")
 
+@bot.message_handler(commands=['restart'])
+def restart_command(message):
+    bot.reply_to(message, "Restarting the bot...")
+    os.execv(sys.executable, ['python'] + sys.argv)
+
+@bot.message_handler(commands=['stop'])
+def stop_command(message):
+    global stop_processing
+    stop_processing = True
+    bot.reply_to(message, "Stopping all ongoing checks...")
+
 def process_document(chat_id, username, file_content):
+    global stop_processing
     total_accounts = file_content.splitlines()
     start_time = time.time()
     approved = []
     declined = []
 
     initial_message = "Checking Your Card.\n\n"
+    footer_info = get_footer_info(len(total_accounts), start_time, username)
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:cc"))
     markup.add(types.InlineKeyboardButton(f"Approved ✅: {len(approved)}", callback_data=f"{chat_id}:approved"))
@@ -49,9 +65,13 @@ def process_document(chat_id, username, file_content):
     markup.add(types.InlineKeyboardButton("Total Cards", callback_data=f"{chat_id}:total"))
     markup.add(types.InlineKeyboardButton("Stop", callback_data=f"{chat_id}:stop"))
     
-    msg = bot.send_message(chat_id, initial_message, reply_markup=markup)
+    msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup)
 
     for account in total_accounts:
+        if stop_processing:
+            bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text="Processing stopped by user.")
+            return
+
         result = check_nonsk4(account)
         if result == 'Approved':
             approved.append(account)
@@ -64,6 +84,7 @@ def process_document(chat_id, username, file_content):
             'total_accounts': total_accounts
         }
 
+        live_update = f"Checking Your Card\nCC: {account}\nResult: {result}\n\n" + footer_info
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:{account}"))
         markup.add(types.InlineKeyboardButton(f"Approved ✅: {len(approved)}", callback_data=f"{chat_id}:approved"))
@@ -73,7 +94,7 @@ def process_document(chat_id, username, file_content):
         bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.message_id,
-            text=initial_message + get_footer_info(len(total_accounts), start_time, username),
+            text=live_update,
             reply_markup=markup
         )
 
