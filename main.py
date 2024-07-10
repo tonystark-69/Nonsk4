@@ -81,11 +81,11 @@ def button(update: Update, context: CallbackContext) -> None:
     global approved, declined, total_accounts
 
     if query.data == 'approved':
-        approved_list = '\n'.join(approved)
-        query.edit_message_text(text=f"Approved Cards:\n{approved_list}")
+        approved_list = '\n'.join(approved) if approved else 'No approved cards yet.'
+        context.bot.send_message(chat_id=query.message.chat.id, text=f"Approved Cards:\n{approved_list}")
     elif query.data == 'declined':
-        declined_list = '\n'.join(declined)
-        query.edit_message_text(text=f"Declined Cards:\n{declined_list}")
+        declined_list = '\n'.join(declined) if declined else 'No declined cards yet.'
+        context.bot.send_message(chat_id=query.message.chat.id, text=f"Declined Cards:\n{declined_list}")
     elif query.data == 'total':
         query.edit_message_text(text=f"Total Cards: {len(total_accounts)}")
     elif query.data == 'stop':
