@@ -1,18 +1,13 @@
-import os
-import sys
+import telebot
 import time
 import threading
-import telebot
 from telebot import types
-from flask import Flask, request
-
 from nonsk4 import check_nonsk4, get_footer_info
+import os
+import sys
 
 TOKEN = '7422696256:AAHV6Df2UShvfvrlFMTkSX8cki6KAMl0T7w'
 bot = telebot.TeleBot(TOKEN)
-
-# Flask setup for keep-alive
-app = Flask(__name__)
 
 # Dictionary to hold chat_id specific data
 chat_data = {}
@@ -111,6 +106,7 @@ def callback_query(call):
     chat_id = call.message.chat.id
     data = call.data.split(':')
     cmd = data[1]
+    query_id = data[0]
 
     # Ensure chat_data contains the necessary keys
     if chat_id not in chat_data:
@@ -128,10 +124,5 @@ def callback_query(call):
     elif cmd == 'stop':
         bot.edit_message_text(chat_id=chat_id, message_id=call.message.message_id, text="Processing stopped by user.")
 
-@app.route('/')
-def index():
-    return 'Bot is running'
-
 if __name__ == '__main__':
-    threading.Thread(target=lambda: bot.polling()).start()
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    bot.polling()
