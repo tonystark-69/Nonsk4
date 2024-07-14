@@ -3,7 +3,8 @@ import time
 from keep_alive import keep_alive
 import threading
 from telebot import types
-from nonsk4 import check_nonsk4, get_footer_info
+from nonsk4 import check_nonsk4, get_footer_info as nonsk4_footer_info
+from gpt import check_gpt, get_footer_info as gpt_footer_info
 import os
 import sys
 
@@ -12,10 +13,10 @@ bot = telebot.TeleBot(TOKEN)
 
 # Dictionary to hold chat_id specific data
 chat_data = {}
-stop_processing = False
+#stop_processing = False
 
 def send_start_message(message):
-    bot.reply_to(message, "Hi! Use /nonsk4 in reply to a txt file to check cards. Use /restart to restart the bot and /stop to stop all checks.")
+    bot.reply_to(message, "Hi! Use /nonsk4 or /gpt in reply to a txt file to check cards or accounts respectively.")
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -33,32 +34,38 @@ def nonsk4_command(message):
             username = message.from_user.username
 
             # Start a new thread to handle the file processing
-            threading.Thread(target=process_document, args=(chat_id, username, file_content)).start()
+            threading.Thread(target=process_nonsk4, args=(chat_id, username, file_content)).start()
         else:
             bot.reply_to(message, "Please reply to a valid txt file.")
     else:
         bot.reply_to(message, "Please reply to a txt file with the /nonsk4 command.")
 
-@bot.message_handler(commands=['restart'])
-def restart_command(message):
-    bot.reply_to(message, "Restarting the bot...")
-    os.execv(sys.executable, ['python'] + sys.argv)
+@bot.message_handler(commands=['gpt'])
+def gpt_command(message):
+    if message.reply_to_message and message.reply_to_message.document:
+        if message.reply_to_message.document.mime_type == 'text/plain':
+            file_info = bot.get_file(message.reply_to_message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            file_content = downloaded_file.decode('utf-8')
 
-@bot.message_handler(commands=['stop'])
-def stop_command(message):
-    global stop_processing
-    stop_processing = True
-    bot.reply_to(message, "Stopping all ongoing checks...")
+            chat_id = message.chat.id
+            username = message.from_user.username
 
-def process_document(chat_id, username, file_content):
-    global stop_processing
+            # Start a new thread to handle the file processing
+            threading.Thread(target=process_gpt, args=(chat_id, username, file_content)).start()
+        else:
+            bot.reply_to(message, "Please reply to a valid txt file.")
+    else:
+        bot.reply_to(message, "Please reply to a txt file with the /gpt command.")
+
+def process_nonsk4(chat_id, username, file_content):
     total_accounts = file_content.splitlines()
     start_time = time.time()
     approved = []
     declined = []
 
     initial_message = "Checking Your Card.\n\n"
-    footer_info = get_footer_info(len(total_accounts), start_time, username)
+    footer_info = nonsk4_footer_info(len(total_accounts), start_time, username)
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:cc"))
     markup.add(types.InlineKeyboardButton(f"Approved ✅: {len(approved)}", callback_data=f"{chat_id}:approved"))
@@ -69,10 +76,6 @@ def process_document(chat_id, username, file_content):
     msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup)
 
     for account in total_accounts:
-        if stop_processing:
-            bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text="Processing stopped by user.")
-            return
-
         result = check_nonsk4(account)
         if result == 'Approved':
             approved.append(account)
@@ -102,28 +105,73 @@ def process_document(chat_id, username, file_content):
     final_message = "Card is finished checking.\n\nDeveloper :@aftab"
     bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message)
 
+def process_gpt(chat_id, username, file_content):
+    total_accounts = file_content.splitlines()
+    start_time = time.time()
+    hits = []
+    dead = []
+
+    initial_message = "Checking Your Account.\n\n"
+    footer_info = gpt_footer_info(len(total_accounts), start_time, username)
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:cc"))
+    markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+    markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+    markup.add(types.InlineKeyboardButton("Total Accounts", callback_data=f"{chat_id}:total"))
+    markup.add(types.InlineKeyboardButton("Stop", callback_data=f"{chat_id}:stop"))
+    
+    msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup)
+
+    for account in total_accounts:
+        user, password = account.split(":")
+        result = check_gpt(user, password)
+        if result == 'Hit':
+            hits.append(account)
+        else:
+            dead.append(account)
+
+        chat_data[chat_id] = {
+            'hits': hits,
+            'dead': dead,
+            'total_accounts': total_accounts
+        }
+
+        live_update = f"Checking Your Account\nAccount: {account}\nResult: {result}\n\n" + footer_info
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:{account}"))
+        markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+        markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+        markup.add(types.InlineKeyboardButton("Total Accounts", callback_data=f"{chat_id}:total"))
+        markup.add(types.InlineKeyboardButton("Stop", callback_data=f"{chat_id}:stop"))
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=msg.message_id,
+            text=live_update,
+            reply_markup=markup
+        )
+
+    final_message = "Account checking finished.\n\nDeveloper :@aftab"
+    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message)
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     chat_id = call.message.chat.id
     data = call.data.split(':')
     cmd = data[1]
-    query_id = data[0]
 
     # Ensure chat_data contains the necessary keys
     if chat_id not in chat_data:
         bot.answer_callback_query(call.id, "No data available for this chat.")
         return
 
-    if cmd == 'approved':
-        approved_list = '\n'.join(chat_data[chat_id].get('approved', [])) if chat_data[chat_id].get('approved') else 'No approved cards yet.'
-        bot.send_message(chat_id, f"Approved Cards:\n{approved_list}")
-    elif cmd == 'declined':
-        declined_list = '\n'.join(chat_data[chat_id].get('declined', [])) if chat_data[chat_id].get('declined') else 'No declined cards yet.'
-        bot.send_message(chat_id, f"Declined Cards:\n{declined_list}")
+    if cmd == 'hit':
+        hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
+        bot.send_message(chat_id, f"Hit Accounts:\n{hits_list}")
+    elif cmd == 'dead':
+        dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
+        bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
     elif cmd == 'total':
         pass  # Do nothing
-    elif cmd == 'stop':
-        bot.edit_message_text(chat_id=chat_id, message_id=call.message.message_id, text="Processing stopped by user.")
 
 if __name__ == "__main__":
     keep_alive()
