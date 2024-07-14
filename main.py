@@ -205,7 +205,7 @@ def process_crunchy(chat_id, username, file_content):
     dead = []
 
     initial_message = "Checking Your Account.\n\n"
-    footer_info = get_footer_info(len(total_accounts), start_time, username)
+    footer_info = crunchy_footer_info(len(total_accounts), start_time, username)
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:cc"))
     markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
@@ -230,9 +230,9 @@ def process_crunchy(chat_id, username, file_content):
         }
 
         if result == 'Hit':
-            live_update = f"↯ CRUNCHY\n\nCOMBO: {account}\nResult: HIT✅\nResponse:\n{response_message}\n\n" + footer_info
+            live_update = f"↯ CRUNCHY\nCOMBO: {account}\nResult: HIT✅\nResponse:\n{response_message}\n\n" + footer_info
         else:
-            live_update = f"↯ CRUNCHY\n\nCOMBO: {account}\nResult: Dead\nResponse: {response_message}\n\n" + footer_info
+            live_update = f"↯ CRUNCHY\nCOMBO: {account}\nResult: Dead\nResponse: {response_message}\n\n" + footer_info
 
         # Update inline buttons with live count
         markup = types.InlineKeyboardMarkup()
@@ -251,6 +251,26 @@ def process_crunchy(chat_id, username, file_content):
 
     final_message = "↯ CRUNCHY\n\nGAME OVER⚡️\n\n－－－－－－－－－－－－－－－－\nOwner: Aftab👑\n－－－－－－－－－－－－－－－－"
     bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message, reply_markup=markup)
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    chat_id = call.message.chat.id
+    data = call.data.split(':')
+    cmd = data[1]
+
+    # Ensure chat_data contains the necessary keys
+    if chat_id not in chat_data:
+        bot.answer_callback_query(call.id, "No data available for this chat.")
+        return
+
+    if cmd == 'hit':
+        hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
+        bot.send_message(chat_id, f"Hit Accounts:\n{hits_list}")
+    elif cmd == 'dead':
+        dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
+        bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
+    elif cmd == 'total':
+        pass  # Do nothing
 
 if __name__ == "__main__":
     keep_alive()
