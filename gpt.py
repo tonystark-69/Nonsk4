@@ -88,7 +88,13 @@ def check_gpt(user, password):
         else:
             return "Dead", "Token or secret not found in the response."
     else:
-        return "Dead", f"Request failed with status code {response.status_code} and message: {response.text}"
+        # Ensure the response text is properly decoded
+        try:
+            error_message = response.content.decode('utf-8')
+        except UnicodeDecodeError:
+            error_message = "Failed to decode response"
+
+        return "Dead", f"Request failed with status code {response.status_code} and message: {error_message}"
 
 def get_footer_info(total_accounts, start_time, username):
     elapsed_time = time.time() - start_time
