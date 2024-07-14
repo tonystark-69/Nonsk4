@@ -102,8 +102,8 @@ def process_nonsk4(chat_id, username, file_content):
             reply_markup=markup
         )
 
-    final_message = "Card is finished checking.\n\nDeveloper :@aftab"
-    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message)
+    final_message = "↯ CHAT GPT\n\nGAME OVER⚡️\n\n－－－－－－－－－－－－－－－－\nOwner: Aftab👑\n－－－－－－－－－－－－－－－－"
+    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message, reply_markup=markup)
 
 def process_gpt(chat_id, username, file_content):
     total_accounts = file_content.splitlines()
@@ -124,7 +124,7 @@ def process_gpt(chat_id, username, file_content):
 
     for account in total_accounts:
         user, password = account.split(":")
-        result = check_gpt(user, password)
+        result, response_message = check_gpt(user, password)
         if result == 'Hit':
             hits.append(account)
         else:
@@ -136,7 +136,11 @@ def process_gpt(chat_id, username, file_content):
             'total_accounts': total_accounts
         }
 
-        live_update = f"Checking Your Account\nAccount: {account}\nResult: {result}\n\n" + footer_info
+        if result == 'Hit':
+            live_update = f"↯ CHAT GPT\nCOMBO: {account}\nResult: HIT✅\nResponse:\n{response_message}\n\n" + footer_info
+        else:
+            live_update = f"↯ CHAT GPT\nCOMBO: {account}\nResult: Dead\nResponse: {response_message}\n\n" + footer_info
+
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:{account}"))
         markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
@@ -150,8 +154,8 @@ def process_gpt(chat_id, username, file_content):
             reply_markup=markup
         )
 
-    final_message = "Account checking finished.\n\nDeveloper :@aftab"
-    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message)
+    final_message = "↯ CHAT GPT\n\nGAME OVER⚡️\n\n－－－－－－－－－－－－－－－－\nOwner: Aftab👑\n－－－－－－－－－－－－－－－－"
+    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message, reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -172,6 +176,7 @@ def callback_query(call):
         bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
     elif cmd == 'total':
         pass  # Do nothing
+
 
 if __name__ == "__main__":
     keep_alive()
