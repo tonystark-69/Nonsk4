@@ -50,7 +50,7 @@ def check_gpt(user, password):
     response = requests.post(url, json=payload, headers=headers, allow_redirects=False)
 
     # Check for key conditions
-        if response.status_code == 500 or "error code: 1020" in response.text:
+    if response.status_code == 500 or "error code: 1020" in response.text:
         return "Dead", "Server responded with 500 or error code: 1020"
 
     if "USER NOT FOUND OR WRONG PASSWORD!" in response.text:
