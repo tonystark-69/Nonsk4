@@ -50,7 +50,7 @@ def check_gpt(user, password):
     response = requests.post(url, json=payload, headers=headers, allow_redirects=False)
 
     # Check for key conditions
-    if response.status_code == 500 or "error code: 1020" in response.text:
+        if response.status_code == 500 or "error code: 1020" in response.text:
         return "Dead", "Server responded with 500 or error code: 1020"
 
     if "USER NOT FOUND OR WRONG PASSWORD!" in response.text:
@@ -88,13 +88,7 @@ def check_gpt(user, password):
         else:
             return "Dead", "Token or secret not found in the response."
     else:
-        # Ensure the response text is properly decoded
-        try:
-            error_message = response.content.decode('utf-8')
-        except UnicodeDecodeError:
-            error_message = "Failed to decode response"
-
-        return "Dead", f"Request failed with status code {response.status_code} and message: {error_message}"
+        return "Dead", f"Request failed with status code {response.status_code}"
 
 def get_footer_info(total_accounts, start_time, username):
     elapsed_time = time.time() - start_time
