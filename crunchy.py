@@ -23,7 +23,10 @@ def check_crunchy(email, password):
     }
 
     response = requests.post(login_url, headers=headers, data=data)
-    response_data = response.json()
+    try:
+        response_data = response.json()
+    except json.JSONDecodeError as e:
+        return "Dead", f"Failed to decode JSON: {str(e)}"
     http_code = response.status_code
 
     if http_code == 200 and 'access_token' in response_data:
@@ -39,7 +42,10 @@ def check_crunchy(email, password):
         }
 
         account_info_response = requests.get(account_info_url, headers=account_info_headers)
-        account_info_data = account_info_response.json()
+        try:
+            account_info_data = account_info_response.json()
+        except json.JSONDecodeError as e:
+            return "Dead", f"Failed to decode JSON: {str(e)}"
 
         email_verified = account_info_data.get('email_verified', 'N/A')
         account_creation_date = account_info_data.get('created', 'N/A')[:10]
@@ -55,7 +61,11 @@ def check_crunchy(email, password):
         }
 
         subscription_info_response = requests.get(subscription_info_url, headers=subscription_info_headers)
-        subscription_info_data = subscription_info_response.json()
+        try:
+            subscription_info_data = subscription_info_response.json()
+        except json.JSONDecodeError as e:
+            return "Dead", f"Failed to decode JSON: {str(e)}"
+        
         subscription_items = subscription_info_data.get('items', [])
 
         if subscription_items:
