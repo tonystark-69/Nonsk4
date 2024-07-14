@@ -209,7 +209,7 @@ def check_nonsk4(ccx):
             result = "RISK: Retry this BIN later."
     else:
         if 'Nice! New payment method added' in text or 'Payment method successfully added.' in text:
-            result = "1000: Approved✅"
+            result = "Approved✅"
         else:
             result = "Error"
 
