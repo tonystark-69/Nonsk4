@@ -51,10 +51,10 @@ def check_gpt(user, password):
 
     # Check for key conditions
     if response.status_code == 500 or "error code: 1020" in response.text:
-        return "Dead"
+        return "Dead", "Server responded with 500 or error code: 1020"
 
     if "USER NOT FOUND OR WRONG PASSWORD!" in response.text:
-        return "Dead"
+        return "Dead", "USER NOT FOUND OR WRONG PASSWORD!"
 
     if response.status_code == 200:
         response_data = response.json()
@@ -75,18 +75,20 @@ def check_gpt(user, password):
             renew = user_info_data.get("recurring")
             max_devices = user_info_data.get("max_devices")
             
-            print(f"Plan Name: {plan_name}")
-            print(f"Expiry: {expiry}")
-            print(f"Days Left: {days_left}")
-            print(f"Trial: {trial}")
-            print(f"Renew: {renew}")
-            print(f"Max Devices: {max_devices}")
+            response_message = (
+                f"Plan Name: {plan_name}\n"
+                f"Expiry: {expiry}\n"
+                f"Days Left: {days_left}\n"
+                f"Trial: {trial}\n"
+                f"Renew: {renew}\n"
+                f"Max Devices: {max_devices}\n"
+            )
             
-            return "Hit"
+            return "Hit", response_message
         else:
-            return "Dead"
+            return "Dead", "Token or secret not found in the response."
     else:
-        return "Dead"
+        return "Dead", f"Request failed with status code {response.status_code} and message: {response.text}"
 
 def get_footer_info(total_accounts, start_time, username):
     elapsed_time = time.time() - start_time
