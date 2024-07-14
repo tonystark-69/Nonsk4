@@ -141,6 +141,14 @@ def process_gpt(chat_id, username, file_content):
         else:
             live_update = f"↯ CHAT GPT\nCOMBO: {account}\nResult: Dead\nResponse: {response_message}\n\n" + footer_info
 
+        # Update inline buttons with live count
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton("CC", callback_data=f"{chat_id}:{account}"))
+        markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+        markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+        markup.add(types.InlineKeyboardButton("Total Accounts", callback_data=f"{chat_id}:total"))
+        markup.add(types.InlineKeyboardButton("Stop", callback_data=f"{chat_id}:stop"))
+        
         bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.message_id,
