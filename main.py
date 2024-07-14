@@ -123,7 +123,7 @@ def process_gpt(chat_id, username, file_content):
     msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup)
 
     for account in total_accounts:
-        user, password = account.split(":")
+        user, password = account.split(":", 1)
         result, response_message = check_gpt(user, password)
         if result == 'Hit':
             hits.append(account)
@@ -141,18 +141,12 @@ def process_gpt(chat_id, username, file_content):
         else:
             live_update = f"↯ CHAT GPT\nCOMBO: {account}\nResult: Dead\nResponse: {response_message}\n\n" + footer_info
 
-        # Ensure the message length is within the limit
-        if len(live_update) > 4096:
-            parts = [live_update[i:i+4096] for i in range(0, len(live_update), 4096)]
-            for part in parts:
-                bot.send_message(chat_id, part)
-        else:
-            bot.edit_message_text(
-                chat_id=chat_id,
-                message_id=msg.message_id,
-                text=live_update,
-                reply_markup=markup
-            )
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=msg.message_id,
+            text=live_update,
+            reply_markup=markup
+        )
 
     final_message = "↯ CHAT GPT\n\nGAME OVER⚡️\n\n－－－－－－－－－－－－－－－－\nOwner: Aftab👑\n－－－－－－－－－－－－－－－－"
     bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message, reply_markup=markup)
