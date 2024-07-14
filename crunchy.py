@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 
 def check_crunchy(email, password):
     login_url = "https://beta-api.crunchyroll.com/auth/v1/token"
