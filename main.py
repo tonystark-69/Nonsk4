@@ -8,6 +8,7 @@ from gpt import check_gpt, get_footer_info as gpt_footer_info
 from crunchy import check_crunchy, get_footer_info as crunchy_footer_info
 import os
 import sys
+from safeum import work, get_footer_info, failed, success, retry, accounts, start, start_time
 
 TOKEN = '7422696256:AAHV6Df2UShvfvrlFMTkSX8cki6KAMl0T7w'
 bot = telebot.TeleBot(TOKEN)
@@ -271,6 +272,43 @@ def callback_query(call):
         bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
     elif cmd == 'total':
         pass  # Do nothing
+
+@bot.message_handler(commands=['safeum'])
+def safeum(message):
+    msg = bot.reply_to(message, "How many accounts do you need?")
+    bot.register_next_step_handler(msg, process_safeum_step)
+
+def process_safeum_step(message):
+    global start_time, failed, success, retry, accounts
+    try:
+        num_accounts = int(message.text)
+        start_time = time.time()
+        failed = 0
+        success = 0
+        retry = 0
+        accounts = []
+        
+        for _ in range(num_accounts):
+            start.submit(work)
+        
+        while success < num_accounts:
+            bot.send_message(message.chat.id, f"↯ SAFEUM\nSUCCESS: {success}\nRETRY: {retry}\nBAD: {failed}")
+            time.sleep(5)
+        
+        footer = get_footer_info(success, start_time, message.from_user.username)
+        bot.send_message(message.chat.id, f"↯ SAFEUM\nSUCCESS: {success}\nRETRY: {retry}\nBAD: {failed}\n\n{footer}")
+        
+        markup = types.InlineKeyboardMarkup()
+        btn = types.InlineKeyboardButton("Show Created Accounts", callback_data="show_accounts")
+        markup.add(btn)
+        bot.send_message(message.chat.id, "Click the button below to view the created accounts.", reply_markup=markup)
+    except Exception as e:
+        bot.reply_to(message, 'An error occurred: ' + str(e))
+
+@bot.callback_query_handler(func=lambda call: call.data == "show_accounts")
+def callback_show_accounts(call):
+    accounts_str = "\n".join(accounts)
+    bot.send_message(call.message.chat.id, f"CREATED ACCOUNTS:\n{accounts_str}")
 
 if __name__ == "__main__":
     keep_alive()
