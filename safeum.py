@@ -1,25 +1,22 @@
+import requests
+import json
 import time
+import os
+import uuid
 from websocket import create_connection
 from ssl import CERT_NONE
 from gzip import decompress
 from random import choice, choices
 from concurrent.futures import ThreadPoolExecutor
-from json import dumps
-import os
 
-# Initialize global variables
+# Global variables
 failed = 0
 success = 0
 retry = 0
 accounts = []
-start_time = None
 
-# Initialize ThreadPoolExecutor
-start = ThreadPoolExecutor(max_workers=1000)
-
-# Helper function to create accounts
 def work():
-    global failed, success, retry
+    global failed, success, retry, accounts
     username = choice('qwertyuioplkjhgfdsazxcvbnm') + ''.join(choices(list('qwertyuioplkjhgfdsazxcvbnm1234567890'), k=12))
     try:
         con = create_connection(
@@ -35,7 +32,7 @@ def work():
             },
             sslopt={"cert_reqs": CERT_NONE}
         )
-        con.send(dumps({
+        con.send(json.dumps({
             "action": "Register",
             "subaction": "Desktop",
             "locale": "en_GB",
@@ -76,8 +73,18 @@ def work():
     except:
         retry += 1
 
-def get_footer_info(total_accounts, start_time, username):
+def create_accounts(num_accounts):
+    global failed, success, retry
+    start_time = time.time()
+    with ThreadPoolExecutor(max_workers=1000) as executor:
+        while success < num_accounts:
+            executor.submit(work)
+            time.sleep(0.1)  # Slight delay to prevent overwhelming the system
+
     elapsed_time = time.time() - start_time
+    return success, retry, failed, elapsed_time, accounts
+
+def get_footer_info(total_accounts, elapsed_time, username):
     footer = (
         f"－－－－－－－－－－－－－－－－\n"
         f"🔹 Total Accounts Created - {total_accounts}\n"
