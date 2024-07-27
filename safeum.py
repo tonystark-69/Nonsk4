@@ -1,3 +1,4 @@
+
 import requests
 import json
 import time
@@ -9,7 +10,6 @@ from gzip import decompress
 from random import choice, choices
 from concurrent.futures import ThreadPoolExecutor
 
-# Global variables
 failed = 0
 success = 0
 retry = 0
@@ -74,23 +74,28 @@ def work():
         retry += 1
 
 def create_accounts(num_accounts):
-    global failed, success, retry
+    global failed, success, retry, accounts
     start_time = time.time()
-    with ThreadPoolExecutor(max_workers=1000) as executor:
-        while success < num_accounts:
-            executor.submit(work)
-            time.sleep(0.1)  # Slight delay to prevent overwhelming the system
+    failed = 0
+    success = 0
+    retry = 0
+    accounts = []
+
+    with ThreadPoolExecutor(max_workers=100) as executor:
+        futures = [executor.submit(work) for _ in range(num_accounts)]
+        for future in futures:
+            future.result()
 
     elapsed_time = time.time() - start_time
     return success, retry, failed, elapsed_time, accounts
 
 def get_footer_info(total_accounts, elapsed_time, username):
     footer = (
-        f"－－－－－－－－－－－－－－－－\n"
-        f"🔹 Total Accounts Created - {total_accounts}\n"
-        f"⏱️ Time Taken - {elapsed_time:.2f} seconds\n"
-        f"▫️ Checked by: {username}\n"
-        f"⚡️ Bot by - AFTAB 👑\n"
+        f"－－－－－－－－－－－－－－－－\\n"
+        f"🔹 Total Accounts Created - {total_accounts}\\n"
+        f"⏱️ Time Taken - {elapsed_time:.2f} seconds\\n"
+        f"▫️ Checked by: {username}\\n"
+        f"⚡️ Bot by - AFTAB 👑\\n"
         f"－－－－－－－－－－－－－－－－"
     )
     return footer
