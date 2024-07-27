@@ -2,3 +2,6 @@ pyTelegramBotAPI==4.5.1
 requests==2.26.0
 user-agent==0.1.9
 flask
+pyfiglet
+websocket-client
+fake-useragent
