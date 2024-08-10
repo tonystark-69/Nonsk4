@@ -1,7 +1,6 @@
 import smtplib
 import traceback
 import concurrent.futures
-from colorama import Fore
 
 live = open('live.txt', 'w')
 dead = open('dead.txt', 'w')
