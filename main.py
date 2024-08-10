@@ -275,28 +275,29 @@ def callback_query(call):
         pass  # Do nothing
 
 @bot.message_handler(commands=['hotmail'])
-def hotmail_command(message):
-    if message.reply_to_message and message.reply_to_message.document:
-        if message.reply_to_message.document.mime_type == 'text/plain':
-            file_info = bot.get_file(message.reply_to_message.document.file_id)
-            downloaded_file = bot.download_file(file_info.file_path)
-            file_content = downloaded_file.decode('utf-8')
+def handle_hotmail_command(message):
+    try:
+        chat_id = message.chat.id
+        username = message.from_user.username or message.from_user.first_name
+        file_content = message.text.split()[1]
 
-            chat_id = message.chat.id
-            username = message.from_user.username
+        # Start processing the Hotmail credentials in a new thread
+        process_hotmail_command(chat_id, username, file_content)
 
-            # Start a new thread to handle the file processing
-            threading.Thread(target=process_hotmail, args=(chat_id, username, file_content)).start()
-        else:
-            bot.reply_to(message, "Please reply to a valid txt file.")
-    else:
-        bot.reply_to(message, "Please reply to a txt file with the /hotmail command.")
+    except Exception as e:
+        bot.send_message(message.chat.id, f"An error occurred: {str(e)}")
 
 def process_hotmail_command(chat_id, username, file_content):
     start_time = time.time()
-    
-    total, live_count, dead_count = process_hotmail(file_content, bot, chat_id)
-    
+
+    # Send the initial message
+    initial_message = "Checking Your Accounts...\n\n"
+    msg = bot.send_message(chat_id, initial_message)
+
+    # Process the Hotmail credentials
+    total, live_count, dead_count = process_hotmail(file_content, bot, chat_id, msg)
+
+    # Prepare the summary message
     footer_info = (
         f"↯ HOTMAIL CHECKER\n"
         f"⇒ GAME OVER\n\n"
@@ -312,27 +313,8 @@ def process_hotmail_command(chat_id, username, file_content):
         f"－－－－－－－－－－－－－－－－"
     )
 
+    # Send the summary message
     bot.send_message(chat_id, footer_info)
-
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query(call):
-    chat_id = call.message.chat.id
-    data = call.data.split(':')
-    cmd = data[1]
-
-    # Ensure chat_data contains the necessary keys
-    if chat_id not in chat_data:
-        bot.answer_callback_query(call.id, "No data available for this chat.")
-        return
-
-    if cmd == 'hit':
-        hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
-        bot.send_message(chat_id, f"Hit Accounts:\n{hits_list}")
-    elif cmd == 'dead':
-        dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
-        bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
-    elif cmd == 'total':
-        pass  # Do nothing
 
 @bot.message_handler(commands=['safeum'])
 def handle_safeum(message):
