@@ -292,33 +292,27 @@ def hotmail_command(message):
     else:
         bot.reply_to(message, "Please reply to a txt file with the /hotmail command.")
 
-def process_hotmail(chat_id, username, file_content):
-    total, live_count, dead_count = hotmail.process_hotmail(file_content)
+def process_hotmail_command(chat_id, username, file_content):
+    start_time = time.time()
+    
+    total, live_count, dead_count = process_hotmail(file_content, bot, chat_id)
+    
     footer_info = (
+        f"↯ HOTMAIL CHECKER\n"
+        f"⇒ GAME OVER\n\n"
+        f"⤬ Summary\n"
+        f"Total: {total}\n"
+        f"LIVE: {live_count}\n"
+        f"DEAD: {dead_count}\n\n"
         f"－－－－－－－－－－－－－－－－\n"
         f"🔹 Total Accounts Checked - {total}\n"
-        f"⏱️ Time Taken - 0.00 seconds\n"  # Update with actual time taken
+        f"⏱️ Time Taken - {time.time() - start_time:.2f} seconds\n"
         f"▫️ Checked by: {username}\n"
         f"⚡️ Bot by - AFTAB 👑\n"
         f"－－－－－－－－－－－－－－－－"
     )
 
-    final_message = (
-        f"↯ HOTMAIL CHECKER\n"
-        f"⇒ GAME OVER\n\n"
-        f"⤬ Summary\n"
-        f"Total : {total}\n"
-        f"LIVE : {live_count}\n"
-        f"DEAD: {dead_count}\n\n"
-        f"{footer_info}"
-    )
-
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(f"Hit ✅: {live_count}", callback_data=f"{chat_id}:hit"))
-    markup.add(types.InlineKeyboardButton(f"Dead ❌: {dead_count}", callback_data=f"{chat_id}:dead"))
-    markup.add(types.InlineKeyboardButton("Total Accounts", callback_data=f"{chat_id}:total"))
-
-    bot.send_message(chat_id, final_message, reply_markup=markup)
+    bot.send_message(chat_id, footer_info)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
