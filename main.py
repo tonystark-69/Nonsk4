@@ -298,13 +298,19 @@ def process_hotmail(chat_id, username, file_content):
     msg = bot.send_message(chat_id, initial_message)
 
     for account in total_accounts:
-        if not account.strip():  # Skip empty lines
-            continue
+        account = account.strip()
+        if not account:
+            continue  # Skip empty lines
+
+        # Debugging: Log the account before processing
+        print(f"Processing account: {account}")
 
         try:
             email, password = account.split(":", 1)
-        except ValueError as e:
-            bot.send_message(chat_id, f"Error processing account: {account}. Skipping.\nError: {e}")
+        except ValueError:
+            error_message = f"Error processing account: {account}. Skipping due to formatting issues."
+            print(error_message)  # Log the error
+            bot.send_message(chat_id, error_message)  # Optional: Notify the user of the issue
             continue
 
         # Debugging: Log email and password
@@ -349,6 +355,7 @@ def process_hotmail(chat_id, username, file_content):
     if hits:
         hits_message = "Hits found:\n" + "\n".join(hits)
         bot.send_message(chat_id, hits_message)
+
 
 
 @bot.message_handler(commands=['safeum'])
