@@ -285,6 +285,7 @@ def hotmail_command(message):
             chat_id = message.chat.id
             username = message.from_user.username
 
+            # Start a new thread to handle the file processing
             threading.Thread(target=process_hotmail, args=(chat_id, username, file_content)).start()
         else:
             bot.reply_to(message, "Please reply to a valid txt file.")
@@ -292,52 +293,32 @@ def hotmail_command(message):
         bot.reply_to(message, "Please reply to a txt file with the /hotmail command.")
 
 def process_hotmail(chat_id, username, file_content):
-    total_accounts = file_content.splitlines()
-    start_time = time.time()
-    hits = []
-    dead = []
+    total, live_count, dead_count = hotmail.process_hotmail(file_content)
+    footer_info = (
+        f"－－－－－－－－－－－－－－－－\n"
+        f"🔹 Total Accounts Checked - {total}\n"
+        f"⏱️ Time Taken - 0.00 seconds\n"  # Update with actual time taken
+        f"▫️ Checked by: {username}\n"
+        f"⚡️ Bot by - AFTAB 👑\n"
+        f"－－－－－－－－－－－－－－－－"
+    )
 
-    initial_message = "Checking Your Accounts.\n\n"
-    footer_info = get_footer_info(len(total_accounts), start_time, username)
+    final_message = (
+        f"↯ HOTMAIL CHECKER\n"
+        f"⇒ GAME OVER\n\n"
+        f"⤬ Summary\n"
+        f"Total : {total}\n"
+        f"LIVE : {live_count}\n"
+        f"DEAD: {dead_count}\n\n"
+        f"{footer_info}"
+    )
+
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("Hit ✅", callback_data=f"{chat_id}:hit"))
-    markup.add(types.InlineKeyboardButton("Dead ❌", callback_data=f"{chat_id}:dead"))
-    
-    msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup)
+    markup.add(types.InlineKeyboardButton(f"Hit ✅: {live_count}", callback_data=f"{chat_id}:hit"))
+    markup.add(types.InlineKeyboardButton(f"Dead ❌: {dead_count}", callback_data=f"{chat_id}:dead"))
+    markup.add(types.InlineKeyboardButton("Total Accounts", callback_data=f"{chat_id}:total"))
 
-    for account in total_accounts:
-        emailpass, result = hotmail.check_emailpass(account)
-        if result is None:
-            hits.append(emailpass)
-        else:
-            dead.append(emailpass)
-
-        chat_data[chat_id] = {
-            'hits': hits,
-            'dead': dead,
-            'total_accounts': total_accounts
-        }
-
-        live_update = (
-            f"↯ HOTMAIL\nCOMBO: {emailpass}\n"
-            f"Result: {'Hit ✅' if result is None else 'Dead ❌'}\n"
-            f"Response: {result if result else 'Login Success!'}\n\n"
-            + footer_info
-        )
-
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
-        markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
-        
-        bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=msg.message_id,
-            text=live_update,
-            reply_markup=markup
-        )
-
-    final_message = "↯ HOTMAIL\n\nGAME OVER⚡️\n\n" + footer_info
-    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message)
+    bot.send_message(chat_id, final_message, reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -345,6 +326,7 @@ def callback_query(call):
     data = call.data.split(':')
     cmd = data[1]
 
+    # Ensure chat_data contains the necessary keys
     if chat_id not in chat_data:
         bot.answer_callback_query(call.id, "No data available for this chat.")
         return
@@ -355,18 +337,8 @@ def callback_query(call):
     elif cmd == 'dead':
         dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
         bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
-
-def get_footer_info(total_accounts, start_time, username):
-    elapsed_time = time.time() - start_time
-    footer = (
-        f"－－－－－－－－－－－－－－－－\n"
-        f"🔹 Total Accounts Checked - {total_accounts}\n"
-        f"⏱️ Time Taken - {elapsed_time:.2f} seconds\n"
-        f"▫️ Checked by: {username}\n"
-        f"⚡️ Bot by - AFTAB 👑\n"
-        f"－－－－－－－－－－－－－－－－"
-    )
-    return footer
+    elif cmd == 'total':
+        pass  # Do nothing
 
 @bot.message_handler(commands=['safeum'])
 def handle_safeum(message):
