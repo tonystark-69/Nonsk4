@@ -21,7 +21,7 @@ def get_footer_info(total_accounts, start_time, username):
     elapsed_time = time.time() - start_time
     footer = (
         f"－－－－－－－－－－－－－－－－\n"
-        f"🔹 Total Accounts Checked - {total_accounts}\n"
+        f"🔹 Total Accounts - {total_accounts}\n"
         f"⏱️ Time Taken - {elapsed_time:.2f} seconds\n"
         f"▫️ Checked by: {username}\n"
         f"⚡️ Bot by - AFTAB 👑\n"
