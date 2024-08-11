@@ -275,17 +275,21 @@ def callback_query(call):
         pass  # Do nothing
 
 @bot.message_handler(commands=['hotmail'])
-def handle_hotmail_command(message):
-    try:
-        chat_id = message.chat.id
-        username = message.from_user.username or message.from_user.first_name
-        file_content = message.text.split()[1]
+def hotmail_command(message):
+    if message.reply_to_message and message.reply_to_message.document:
+        if message.reply_to_message.document.mime_type == 'text/plain':
+            file_info = bot.get_file(message.reply_to_message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            file_content = downloaded_file.decode('utf-8')
 
-        # Start processing the Hotmail credentials in a new thread
-        process_hotmail_command(chat_id, username, file_content)
+            chat_id = message.chat.id
+            username = message.from_user.username
 
-    except Exception as e:
-        bot.send_message(message.chat.id, f"An error occurred: {str(e)}")
+            threading.Thread(target=process_hotmail, args=(chat_id, username, file_content)).start()
+        else:
+            bot.reply_to(message, "Please reply to a valid txt file.")
+    else:
+        bot.reply_to(message, "Please reply to a txt file with the /hotmail command.")
 
 def process_hotmail(chat_id, username, file_content):
     total_accounts = file_content.splitlines()
@@ -293,70 +297,71 @@ def process_hotmail(chat_id, username, file_content):
     hits = []
     dead = []
 
-    # Send the initial message
-    initial_message = "Checking Your Accounts..."
-    msg = bot.send_message(chat_id, initial_message)
+    initial_message = "Checking Your Account.\n\n"
+    footer_info = hotmail.get_footer_info(len(total_accounts), start_time, username)
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+    markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+
+    msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup)
 
     for account in total_accounts:
-        account = account.strip()
-        if not account:
-            continue  # Skip empty lines
-
-        # Debugging: Log the account before processing
-        print(f"Processing account: {account}")
-
-        try:
-            email, password = account.split(":", 1)
-        except ValueError:
-            error_message = f"Error processing account: {account}. Skipping due to formatting issues."
-            print(error_message)  # Log the error
-            bot.send_message(chat_id, error_message)  # Optional: Notify the user of the issue
-            continue
-
-        # Debugging: Log email and password
-        print(f"Checking: Email: {email}, Password: {password}")
-
-        result, response_message = check_hotmail(email, password)
+        email, password = account.split(":", 1)
+        result, response_message = hotmail.check_hotmail(email, password)
         if result == 'Hit':
             hits.append(account)
         else:
             dead.append(account)
 
-        live_update = (
-            f"Checking: {email}\n"
-            f"Result: {'HIT✅' if result == 'Hit' else 'Dead'}\n\n"
-            f"Total: {len(hits) + len(dead)} | Live: {len(hits)} | Dead: {len(dead)}"
-        )
+        chat_data[chat_id] = {
+            'hits': hits,
+            'dead': dead,
+            'total_accounts': total_accounts
+        }
+
+        live_update = f"↯ HOTMAIL\nCOMBO: {account}\nResult: {result}\nResponse: {response_message}\n\n" + footer_info
+
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+        markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
 
         bot.edit_message_text(
             chat_id=chat_id,
             message_id=msg.message_id,
-            text=live_update
+            text=live_update,
+            reply_markup=markup
         )
 
-    # Final summary
     final_message = (
-        f"↯ HOTMAIL CHECKER\n"
-        f"⇒ GAME OVER\n\n"
+        f"↯ HOTMAIL CHECKER\n⇒ GAME OVER\n\n"
         f"⤬ Summary\n"
-        f"Total: {len(hits) + len(dead)}\n"
-        f"LIVE: {len(hits)}\n"
+        f"Total : {len(total_accounts)}\n"
+        f"LIVE : {len(hits)}\n"
         f"DEAD: {len(dead)}\n\n"
-        f"－－－－－－－－－－－－－－－－\n"
-        f"🔹 Total Accounts Checked - {len(hits) + len(dead)}\n"
-        f"⏱️ Time Taken - {time.time() - start_time:.2f} seconds\n"
-        f"▫️ Checked by: {username}\n"
-        f"⚡️ Bot by - AFTAB 👑\n"
-        f"－－－－－－－－－－－－－－－－"
+        f"{footer_info}"
     )
-    bot.send_message(chat_id, final_message)
+    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message)
 
-    # Automatically send hits
     if hits:
-        hits_message = "Hits found:\n" + "\n".join(hits)
-        bot.send_message(chat_id, hits_message)
+        hit_accounts = '\n'.join(hits)
+        bot.send_message(chat_id, f"Hit Accounts:\n{hit_accounts}")
 
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    chat_id = call.message.chat.id
+    data = call.data.split(':')
+    cmd = data[1]
 
+    if chat_id not in chat_data:
+        bot.answer_callback_query(call.id, "No data available for this chat.")
+        return
+
+    if cmd == 'hit':
+        hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
+        bot.send_message(chat_id, f"Hit Accounts:\n{hits_list}")
+    elif cmd == 'dead':
+        dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
+        bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
 
 @bot.message_handler(commands=['safeum'])
 def handle_safeum(message):
