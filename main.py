@@ -319,7 +319,7 @@ def process_hotmail(chat_id, username, file_content):
             'total_accounts': total_accounts
         }
 
-        live_update = f"↯ HOTMAIL\n\n➣COMBO: {account}\n➣Result: {result}\n✦Response: {response_message}\n\n" + footer_info
+        live_update = f"↯ HOTMAIL CHECKER\n\n➣COMBO: {account}\n➣Result: {result}\n✦Response: {response_message}\n\n" + footer_info
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
