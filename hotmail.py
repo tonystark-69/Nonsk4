@@ -11,9 +11,9 @@ def check_hotmail(email, password):
         server.starttls()
         server.login(email, password)
         server.quit()
-        return "Hit", "Login Success"
+        return "Hit", "Login Success✅"
     except smtplib.SMTPAuthenticationError:
-        return "Dead", "Authentication failed"
+        return "Dead", "Authentication failed🚫"
     except Exception as e:
         return "Dead", f"{str(e)}\n{traceback.format_exc()}"
 
