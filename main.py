@@ -319,7 +319,7 @@ def process_hotmail(chat_id, username, file_content):
             'total_accounts': total_accounts
         }
 
-        live_update = f"↯ HOTMAIL\nCOMBO: {account}\nResult: {result}\nResponse: {response_message}\n\n" + footer_info
+        live_update = f"↯ HOTMAIL\n\n➣COMBO: {account}\n➣Result: {result}\n✦Response: {response_message}\n\n" + footer_info
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
@@ -344,7 +344,7 @@ def process_hotmail(chat_id, username, file_content):
 
     if hits:
         hit_accounts = '\n'.join(hits)
-        bot.send_message(chat_id, f"Hit Accounts:\n{hit_accounts}")
+        bot.send_message(chat_id, f"↯HITS\n\n{hit_accounts}")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -358,7 +358,7 @@ def callback_query(call):
 
     if cmd == 'hit':
         hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
-        bot.send_message(chat_id, f"Hit Accounts:\n{hits_list}")
+        bot.send_message(chat_id, f"↯HITS\n{hits_list}")
     elif cmd == 'dead':
         dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
         bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
