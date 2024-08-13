@@ -5,8 +5,8 @@ import threading
 from telebot import types
 from nonsk4 import check_nonsk4, get_footer_info as nonsk4_footer_info
 from gpt import check_gpt, get_footer_info as gpt_footer_info
-import crunchy
-#from crunchy import check_crunchy, get_footer_info as crunchy_footer_info
+#import crunchy
+from crunchy import check_crunchy, get_footer_info
 import os
 import sys
 import hotmail
@@ -208,8 +208,8 @@ def process_crunchy(chat_id, username, file_content):
     hits = []
     dead = []
 
-    initial_message = "Checking Your Accounts...\n\n"
-    footer_info = crunchy_footer_info(len(total_accounts), start_time, username)
+    initial_message = "Checking Your Account.\n\n"
+    footer_info = get_footer_info(len(total_accounts), start_time, username)
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
     markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
@@ -224,18 +224,13 @@ def process_crunchy(chat_id, username, file_content):
         else:
             dead.append(account)
 
-        # Store the hits and dead data for callback queries
         chat_data[chat_id] = {
             'hits': hits,
             'dead': dead,
             'total_accounts': total_accounts
         }
 
-        # Update the message with live results
-        live_update = (
-            f"↯ CRUNCHY CHECKER\n\n➣COMBO: {account}\n"
-            f"➣Result: {result}\n✦Response: {response_message}\n\n" + footer_info
-        )
+        live_update = f"↯ CRUNCHY CHECKER\n\n➣COMBO: {account}\n➣Result: {result}\n✦Response: {response_message}\n\n" + footer_info
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
@@ -258,10 +253,9 @@ def process_crunchy(chat_id, username, file_content):
     )
     bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message)
 
-    # Send hits as a new message
     if hits:
         hit_accounts = '\n'.join(hits)
-        bot.send_message(chat_id, f"↯ HITS\n\n{hit_accounts}")
+        bot.send_message(chat_id, f"↯HITS\n\n{hit_accounts}")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -275,10 +269,10 @@ def callback_query(call):
 
     if cmd == 'hit':
         hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
-        bot.send_message(chat_id, f"↯ HITS\n{hits_list}")
+        bot.send_message(chat_id, f"↯HITS\n{hits_list}")
     elif cmd == 'dead':
         dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
-        bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
+        bot.send_message(chat_id, f"↯DEAD\n{dead_list}")
         
 @bot.message_handler(commands=['hotmail'])
 def hotmail_command(message):
