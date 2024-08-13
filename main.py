@@ -21,11 +21,21 @@ chat_data = {}
 #stop_processing = False
 
 def send_start_message(message):
-    bot.reply_to(message, "Hi! Use /nonsk4 or /gpt in reply to a txt file to check cards or accounts respectively.")
+    first_name = message.from_user.first_name
+    welcome_message = (
+        f"Hello there, {first_name}!\n"
+        "I am Starboy, a simple account-checking bot. I'm still under development, "
+        "so you might encounter some bugs.\n"
+        "To see all commands, use /help.\n\n"
+        "If you face any issues, feel free to contact @aftab_kabirr.\n\n"
+        "Bot by: Aftab👑"
+    )
+    bot.reply_to(message, welcome_message)
 
 @bot.message_handler(commands=['start'])
 def start(message):
     send_start_message(message)
+
 
 @bot.message_handler(commands=['nonsk4'])
 def nonsk4_command(message):
