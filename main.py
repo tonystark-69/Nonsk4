@@ -35,7 +35,24 @@ def send_start_message(message):
 @bot.message_handler(commands=['start'])
 def start(message):
     send_start_message(message)
+    
+def send_help_message(message):
+    help_message = (
+        "Here are the available commands:\n\n"
+        "/crunchy - Upload your combo and reply with the command.\n"
+        "/hotmail - Upload your combo and reply with the command.\n"
+        "/seedr - Upload your combo and reply with the command.\n"
+        "/gpt - Upload your combo and reply with the command.\n"
+        "/nonsk4 - Upload your combo and reply with the command.\n\n"
+        "More commands coming soon...\n\n"
+        "For any issues or inquiries, contact: @aftab_kabirr\n\n"
+        "Bot by: Aftab👑"
+    )
+    bot.reply_to(message, help_message)
 
+@bot.message_handler(commands=['help'])
+def help_command(message):
+    send_help_message(message)
 
 @bot.message_handler(commands=['nonsk4'])
 def nonsk4_command(message):
