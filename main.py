@@ -204,12 +204,14 @@ def crunchy_command(message):
 
 def process_crunchy(chat_id, username, file_content):
     total_accounts = file_content.splitlines()
-    start_time = time.time()
+    start_time = time.time()  # Start time right before processing
+
     hits = []
     dead = []
 
-    initial_message = "Checking Your Account.\n\n"
-    footer_info = get_footer_info(len(total_accounts), start_time, username)
+    initial_message = "Checking Your Accounts...\n\n"
+    footer_info = get_footer_info(total_accounts, start_time, username)
+
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
     markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
@@ -230,7 +232,12 @@ def process_crunchy(chat_id, username, file_content):
             'total_accounts': total_accounts
         }
 
-        live_update = f"↯ CRUNCHY CHECKER\n\n➣COMBO: {account}\n➣Result: {result}\n✦Response: {response_message}\n\n" + footer_info
+        live_update = (
+            f"↯ CRUNCHY CHECKER\n\n"
+            f"➣COMBO: {account}\n"
+            f"➣Result: {result}\n"
+            f"✦Response: {response_message}\n\n" + footer_info
+        )
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
