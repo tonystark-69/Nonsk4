@@ -28,12 +28,10 @@ def check_crunchy(email, password):
     except json.JSONDecodeError as e:
         return "Dead", f"Failed to decode JSON: {str(e)}"
     
-    http_code = response.status_code
-
-    if http_code == 200 and 'access_token' in response_data:
+    if response.status_code == 200 and 'access_token' in response_data:
         access_token = response_data['access_token']
 
-        # Fetch account information
+        # Get account information
         account_info_url = "https://beta-api.crunchyroll.com/accounts/v1/me"
         account_info_headers = {
             "Authorization": f"Bearer {access_token}",
@@ -52,7 +50,7 @@ def check_crunchy(email, password):
         account_creation_date = account_info_data.get('created', 'N/A')[:10]
         external_id = account_info_data.get('external_id', 'N/A')
 
-        # Fetch subscription information
+        # Get subscription information
         subscription_info_url = f"https://beta-api.crunchyroll.com/subs/v1/subscriptions/{external_id}/products"
         subscription_info_headers = {
             "Authorization": f"Bearer {access_token}",
@@ -100,7 +98,8 @@ def get_footer_info(total_accounts, start_time, username):
     elapsed_time = time.time() - start_time
     footer = (
         f"－－－－－－－－－－－－－－－－\n"
-        f"🔹 Total Accounts  - {total_accounts}\n"
+        f"🔹 Total Accounts Checked - {total_accounts}\n"
+        f"⏱️ Time Taken - {elapsed_time:.2f} seconds\n"
         f"▫️ Checked by: {username}\n"
         f"⚡️ Bot by - AFTAB 👑\n"
         f"－－－－－－－－－－－－－－－－"
