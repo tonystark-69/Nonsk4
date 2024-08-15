@@ -287,7 +287,7 @@ def process_smsbd(chat_id, username, file_content):
     bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message, reply_markup=markup)
 
     if hits:
-        bot.send_message(chat_id, f"HITS[SMSBD]:\n{'\n'.join(hits)}")
+        bot.send_message(chat_id, f"HITS[SMSBD]:\n{hits_list}")
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
