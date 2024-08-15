@@ -53,4 +53,12 @@ def check_smsbd(email, password):
 
 def get_footer_info(total, start_time, username):
     elapsed_time = round(time.time() - start_time, 2)
-    return f"\n－－－－－－－－－－－－－－－－\n🔹 Total Accounts Checked - {total}\n⏱️ Time Taken - {elapsed_time} seconds\n▫️ Checked by: {username}\n⚡️ Bot by - AFTAB 👑\n－－－－－－－－－－－－－－－－"
+    footer = (
+        f"－－－－－－－－－－－－－－－－\n"
+        f"🔹 Total Accounts - {total_accounts}\n"
+        f"⏱️ Time Taken - {elapsed_time:.2f} seconds\n"
+        f"▫️ Checked by: {username}\n"
+        f"⚡️ Bot by - AFTAB 👑\n"
+        f"－－－－－－－－－－－－－－－－"
+    )
+    return footer
