@@ -51,14 +51,22 @@ def check_smsbd(email, password):
     else:
         return "Dead", f"Insufficient balance or unable to retrieve balance. Balance: {balance} BDT"
 
-def get_footer_info(total, start_time, username):
-    elapsed_time = round(time.time() - start_time, 2)
+import time
+
+def get_footer_info(total_accounts, start_time, username):
+    # Correct elapsed time calculation
+    elapsed_time = time.time() - start_time
+    
+    # Format elapsed time to a readable format
+    elapsed_time_formatted = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
+    
     footer = (
         f"－－－－－－－－－－－－－－－－\n"
-        f"🔹 Total Accounts - {total_accounts}\n"
-        f"⏱️ Time Taken - {elapsed_time:.2f} seconds\n"
+        f"🔹 Total Accounts Checked - {total_accounts}\n"
+        f"⏱️ Time Taken - {elapsed_time_formatted}\n"
         f"▫️ Checked by: {username}\n"
         f"⚡️ Bot by - AFTAB 👑\n"
         f"－－－－－－－－－－－－－－－－"
     )
     return footer
+
