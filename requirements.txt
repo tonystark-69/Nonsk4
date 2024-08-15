@@ -6,4 +6,4 @@ pyfiglet
 websocket-client==1.2.1
 fake-useragent
 beautifulsoup4==4.10.0
-lxml==4.6.4
+
