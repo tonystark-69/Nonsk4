@@ -96,16 +96,12 @@ def check_crunchy(email, password):
 
 def get_footer_info(total_accounts, start_time, username):
     elapsed_time = time.time() - start_time
-
-    # Ensure the total_accounts is a count of accounts, not any other value
-    total_accounts = len(total_accounts)
-
     footer = (
         f"－－－－－－－－－－－－－－－－\n"
-        f"🔹 Total Accounts - {total_accounts}\n"
-        f"⏱️ Time Taken - {elapsed_time:.2f} seconds\n"
-        f"▫️ Checked by: {username}\n"
-        f"⚡️ Bot by - AFTAB 👑\n"
+        f"⌧ Total ACCOUNT Checked - {total_accounts}\n"
+        f"⌧ Time Taken - {elapsed_time:.2f} seconds\n"
+        f"⌧ Checked by: {username}\n"
+        f"⚡️ Bot by - AFTAB [BOSS]\n"
         f"－－－－－－－－－－－－－－－－"
     )
     return footer
