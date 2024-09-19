@@ -489,7 +489,7 @@ def callback_query(call):
     elif cmd == 'dead':
         dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
         bot.send_message(chat_id, f"Dead Accounts:\n{dead_list}")
-
+'''
 @bot.message_handler(commands=['safeum'])
 def handle_safeum(message):
     msg = bot.reply_to(message, "How many accounts do you need?")
@@ -519,7 +519,7 @@ def process_account_count(message):
         bot.send_message(message.chat.id, f"Accounts:\n{accounts_message}")
     except ValueError:
         bot.reply_to(message, "Please enter a valid number.")
-
+'''
 if __name__ == "__main__":
     keep_alive()
     bot.polling()
