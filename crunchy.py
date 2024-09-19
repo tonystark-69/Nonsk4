@@ -99,7 +99,7 @@ def get_footer_info(total_accounts, start_time, username):
     footer = (
         f"－－－－－－－－－－－－－－－－\n"
         f"<b>Total ACCOUNT Checked - {total_accounts}</b>\n"
-        f"<b>Checked by: <a href='https://t.me/aftab_kabirr'>Aftab👑</a></b>\n"
+        f"<b>Checked by: <a href='https://t.me/{username}'>Aftab👑</a></b>\n"
         f"－－－－－－－－－－－－－－－－"
     )
     return footer
