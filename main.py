@@ -262,12 +262,22 @@ def process_crunchy(chat_id, username, file_content):
             'total_accounts': len(total_accounts)
         }
 
+        # Formatting the live update according to your requirements
         live_update = (
-            f"↯ CRUNCHY CHECKER\n\n"
+            f"↯ CRUNCHYROLL CHECKER\n\n"
             f"➣Combo: {account}\n"
-            f"➣Result: {result}\n"
-            f"➣Response: {response_message}\n"
-            f"{get_footer_info(len(total_accounts), start_time, username)}"
+            f"➣Response: HIT SUCCESSFULLY✅\n\n"
+            f"<b>SUBSCRIPTION DETAILS</b>\n"
+            f"____________________________\n"
+            f"↦Email Verified: {response_message.split('Email Verified: ')[1].split()[0]}\n"
+            f"↦Creation Date: {response_message.split('Account Creation Date: ')[1].split()[0]}\n"
+            f"↦Subscription Name: {response_message.split('Subscription Name: ')[1].split()[0]}\n"
+            f"↦Currency: {response_message.split('Currency: ')[1].split()[0]}\n"
+            f"↦Amount: {response_message.split('Subscription Amount: ')[1].split()[0]}\n\n"
+            f"－－－－－－－－－－－－－－－－\n"
+            f"Total : {len(total_accounts)} | HITS: {len(hits)}\n"
+            f"Checked by: <a href='https://t.me/{username}'>Aftab👑</a>\n"
+            f"－－－－－－－－－－－－－－－－"
         )
 
         markup = types.InlineKeyboardMarkup()
@@ -283,18 +293,21 @@ def process_crunchy(chat_id, username, file_content):
         )
 
     final_message = (
-        f"↯ CRUNCHY CHECKER\n⇒ GAME OVER\n\n"
+        f"↯ CRUNCHYROLL CHECKER\n⇒ GAME OVER\n\n"
         f"⤬ Summary\n"
-        f"Total : {len(total_accounts)}\n"
-        f"LIVE : {len(hits)}\n"
+        f"Total : {len(total_accounts)} | HITS: {len(hits)}\n"
         f"DEAD: {len(dead)}\n\n"
-        f"{footer_info}"
+        f"－－－－－－－－－－－－－－－－\n"
+        f"<b>Total ACCOUNT Checked - {len(total_accounts)}</b>\n"
+        f"Checked by: <a href='https://t.me/{username}'>Aftab👑</a>\n"
+        f"－－－－－－－－－－－－－－－－"
     )
     bot.edit_message_text(chat_id=chat_id, message_id=msg.message_id, text=final_message, parse_mode='HTML')
 
     if hits:
         hit_accounts = '\n'.join(hits)
         bot.send_message(chat_id, f"↯ HITS\n\n{hit_accounts}", parse_mode='HTML')
+
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
